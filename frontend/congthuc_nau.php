@@ -28,6 +28,7 @@ $ds_congthuc = $conn->query("
     LIMIT $limit OFFSET $offset
 ");
 
+// Lấy dữ liệu chỉnh sửa nếu có
 $edit_data = null;
 if (isset($_GET['edit'])) {
     $id_edit = (int) $_GET['edit'];
@@ -40,6 +41,7 @@ if (isset($_GET['edit'])) {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Công thức nấu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -62,24 +64,28 @@ if (isset($_GET['edit'])) {
             </form>
 
             <!-- Nút thêm -->
-            <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addModal">
-                + Thêm công thức
-            </button>
+            <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addModal">+ Thêm
+                công thức</button>
 
-            <!-- Danh sách công thức -->
+            <!-- Danh sách công thức (chỉ hiển thị tiêu đề) -->
             <?php if ($ds_congthuc->num_rows > 0): ?>
             <?php while ($ct = $ds_congthuc->fetch_assoc()): ?>
             <div class="card mb-3 shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <strong><?= htmlspecialchars($ct['tieude']) ?></strong>
+                    <a href="#content-<?= $ct['id'] ?>" class="text-decoration-none" data-bs-toggle="collapse">
+                        <strong><?= htmlspecialchars($ct['tieude']) ?></strong>
+                    </a>
                     <div>
                         <a href="?edit=<?= $ct['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
                         <a href="../backend/congthuc_nau_xuly.php?delete=<?= $ct['id'] ?>" class="btn btn-sm btn-danger"
                             onclick="return confirm('Xoá công thức này?')">Xoá</a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <p><?= nl2br(htmlspecialchars($ct['noidung'])) ?></p>
+                <!-- Nội dung sẽ hiển thị khi nhấn vào tiêu đề -->
+                <div id="content-<?= $ct['id'] ?>" class="collapse">
+                    <div class="card-body">
+                        <p><?= nl2br(htmlspecialchars($ct['noidung'])) ?></p>
+                    </div>
                 </div>
             </div>
             <?php endwhile; ?>
@@ -102,7 +108,7 @@ if (isset($_GET['edit'])) {
         </div>
     </div>
 
-    <!-- Modal thêm -->
+    <!-- Modal thêm công thức -->
     <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <form method="POST" action="../backend/congthuc_nau_xuly.php" class="modal-content">
@@ -123,7 +129,7 @@ if (isset($_GET['edit'])) {
         </div>
     </div>
 
-    <!-- Modal sửa -->
+    <!-- Modal sửa công thức -->
     <?php if ($edit_data): ?>
     <script>
     window.addEventListener('load', () => {
