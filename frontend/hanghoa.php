@@ -7,54 +7,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Phần xử lý thêm mới hàng hoá
-if (isset($_POST['add'])) {
-    $ten = $_POST['ten'];
-    $loai = $_POST['loai'];
-    $so_luong = $_POST['so_luong'];
-    $don_vi = $_POST['don_vi'];
-    $kieu = $_POST['kieu'];
-    $gia_nhap = $_POST['gia_nhap'] ?? 0;
-    $nha_cung_cap = $_POST['nha_cung_cap'] ?? '';
-    $ghi_chu = $_POST['ghi_chu'];
-
-    $stmt = $conn->prepare("INSERT INTO hanghoa (ten, loai, so_luong, don_vi, kieu, gia_nhap, nha_cung_cap, ghi_chu, ngay_thao_tac)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-    $stmt->bind_param("ssdssdss", $ten, $loai, $so_luong, $don_vi, $kieu, $gia_nhap, $nha_cung_cap, $ghi_chu);
-    $stmt->execute();
-    header("Location: hanghoa.php");
-    exit;
-}
-
-// Phần xử lý cập nhật hàng hoá
-if (isset($_POST['update'])) {
-    $id = $_POST['id'];
-    $ten = $_POST['ten'];
-    $loai = $_POST['loai'];
-    $so_luong = $_POST['so_luong'];
-    $don_vi = $_POST['don_vi'];
-    $kieu = $_POST['kieu'];
-    $gia_nhap = $_POST['gia_nhap'] ?? 0;
-    $nha_cung_cap = $_POST['nha_cung_cap'] ?? '';
-    $ghi_chu = $_POST['ghi_chu'];
-
-    $stmt = $conn->prepare("UPDATE hanghoa 
-        SET ten=?, loai=?, so_luong=?, don_vi=?, kieu=?, gia_nhap=?, nha_cung_cap=?, ghi_chu=?, ngay_thao_tac=NOW()
-        WHERE id=?");
-    $stmt->bind_param("ssdssdssi", $ten, $loai, $so_luong, $don_vi, $kieu, $gia_nhap, $nha_cung_cap, $ghi_chu, $id);
-    $stmt->execute();
-    header("Location: hanghoa.php");
-    exit;
-}
-
-// Phần xử lý xoá hàng hoá
-if (isset($_GET['delete'])) {
-    $id = $_GET['delete'];
-    $conn->query("DELETE FROM hanghoa WHERE id=$id");
-    header("Location: hanghoa.php");
-    exit;
-}
-
 // Phần xử lý phiếu nhập/xuất
 if (isset($_POST['save_nhap_xuat'])) {
     $hanghoa_id = $_POST['hanghoa_id'];
@@ -78,13 +30,6 @@ if (isset($_POST['save_nhap_xuat'])) {
     exit;
 }
 
-// Lấy danh sách loại hàng duy nhất
-$loaiOptions = [];
-$loai_result = $conn->query("SELECT DISTINCT loai FROM hanghoa WHERE loai IS NOT NULL AND loai != ''");
-while ($r = $loai_result->fetch_assoc()) {
-    $loaiOptions[] = $r['loai'];
-}
-
 // Lọc và phân trang
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10;
@@ -106,6 +51,13 @@ if (!empty($_GET['filter_kieu'])) {
 if (!empty($_GET['filter_ncc'])) {
     $filter_ncc = $conn->real_escape_string($_GET['filter_ncc']);
     $cond_sql .= " AND nha_cung_cap = '$filter_ncc'";
+}
+
+// Lấy danh sách loại hàng duy nhất
+$loaiOptions = [];
+$loai_result = $conn->query("SELECT DISTINCT loai FROM hanghoa WHERE loai IS NOT NULL AND loai != ''");
+while ($r = $loai_result->fetch_assoc()) {
+    $loaiOptions[] = $r['loai'];
 }
 
 // Lấy danh sách nhà cung cấp duy nhất
@@ -235,9 +187,9 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                         <td><?= number_format($giatri) ?></td>
                         <td><?= $row['ngay_thao_tac'] ?></td>
                         <td>
-                            <a href="hanghoa.php?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
-                            <a href="hanghoa.php?delete=<?= $row['id'] ?>" onclick="return confirm('Xoá hàng hoá này?')"
-                                class="btn btn-sm btn-danger">Xoá</a>
+                            <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
+                            <a href="../backend/hanghoa_xuly.php?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger"
+                                onclick="return confirm('Xoá hàng hoá này?')">Xoá</a>
                         </td>
                     </tr>
                     <?php endwhile; ?>
@@ -271,6 +223,51 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
         </div>
     </div>
 
+    <!-- Modal Sửa -->
+    <?php if (isset($_GET['edit'])):
+        $id = (int) $_GET['edit'];
+        $edit = $conn->query("SELECT * FROM hanghoa WHERE id=$id")->fetch_assoc();
+    ?>
+    <script>
+    window.addEventListener('load', () => new bootstrap.Modal(document.getElementById('editModal')).show());
+    </script>
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="../backend/hanghoa_xuly.php" method="POST" class="modal-content">
+                <input type="hidden" name="id" value="<?= $edit['id'] ?>">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sửa hàng hoá</h5>
+                </div>
+                <div class="modal-body">
+                    <input name="ten" class="form-control mb-2" value="<?= $edit['ten'] ?>" placeholder="Tên hàng hoá"
+                        required>
+                    <input name="loai" class="form-control mb-2" value="<?= $edit['loai'] ?>" placeholder="Loại">
+                    <input name="so_luong" type="number" step="0.01" class="form-control mb-2"
+                        value="<?= $edit['so_luong'] ?>" placeholder="Số lượng">
+                    <input name="don_vi" class="form-control mb-2" value="<?= $edit['don_vi'] ?>" placeholder="Đơn vị">
+                    <select name="kieu" class="form-select mb-2">
+                        <option value="Nguyên liệu" <?= ($edit['kieu'] == 'Nguyên liệu') ? 'selected' : '' ?>>Nguyên
+                            liệu</option>
+                        <option value="Vật liệu" <?= ($edit['kieu'] == 'Vật liệu') ? 'selected' : '' ?>>Vật liệu
+                        </option>
+                    </select>
+                    <input name="gia_nhap" type="number" step="1000" class="form-control mb-2"
+                        value="<?= $edit['gia_nhap'] ?>" placeholder="Giá nhập">
+                    <input name="nha_cung_cap" class="form-control mb-2" value="<?= $edit['nha_cung_cap'] ?>"
+                        placeholder="Nhà cung cấp">
+                    <textarea name="ghi_chu" class="form-control"
+                        placeholder="Ghi chú"><?= $edit['ghi_chu'] ?></textarea>
+                </div>
+                <div class="modal-footer">
+                    <a href="hanghoa.php" class="btn btn-secondary">Huỷ</a>
+                    <button type="submit" name="update" class="btn btn-success">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
+
     <!-- Modal Thêm -->
     <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -299,6 +296,23 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
             </form>
         </div>
     </div>
+
+    <script>
+    function editProduct(id, ten, loai, so_luong, don_vi, kieu, gia_nhap, nha_cung_cap, ghi_chu) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-ten').value = ten;
+        document.getElementById('edit-loai').value = loai;
+        document.getElementById('edit-so_luong').value = so_luong;
+        document.getElementById('edit-don_vi').value = don_vi;
+        document.getElementById('edit-kieu').value = kieu;
+        document.getElementById('edit-gia_nhap').value = gia_nhap;
+        document.getElementById('edit-nha_cung_cap').value = nha_cung_cap;
+        document.getElementById('edit-ghi_chu').value = ghi_chu;
+
+        var myModal = new bootstrap.Modal(document.getElementById('editModal'), {});
+        myModal.show();
+    }
+    </script>
 
     <!-- Modal Phiếu nhập/xuất -->
     <div class="modal fade" id="addPhieuModal" tabindex="-1" aria-hidden="true">
