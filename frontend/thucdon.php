@@ -80,7 +80,9 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                     <tr>
                         <th>Tên món</th>
                         <th>Danh mục</th>
+                        <th>Giá vốn 500ml</th> <!-- Giá vốn trước Giá bán -->
                         <th>Giá 500ml</th>
+                        <th>Giá vốn 700ml</th> <!-- Giá vốn trước Giá bán -->
                         <th>Giá 700ml</th>
                         <th>Ghi chú</th>
                         <th>Hành động</th>
@@ -91,8 +93,10 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                     <tr>
                         <td><?= htmlspecialchars($row['ten_mon']) ?></td>
                         <td><?= htmlspecialchars($row['danh_muc']) ?></td>
-                        <td><?= number_format($row['gia_ban_500ml']) ?> VND</td>
-                        <td><?= number_format($row['gia_ban_700ml']) ?> VND</td>
+                        <td><?= number_format($row['gia_von_500ml']) ?> VND</td> <!-- Hiển thị giá vốn 500ml -->
+                        <td><?= number_format($row['gia_ban_500ml']) ?> VND</td> <!-- Hiển thị giá bán 500ml -->
+                        <td><?= number_format($row['gia_von_700ml']) ?> VND</td> <!-- Hiển thị giá vốn 700ml -->
+                        <td><?= number_format($row['gia_ban_700ml']) ?> VND</td> <!-- Hiển thị giá bán 700ml -->
                         <td><?= htmlspecialchars($row['ghi_chu']) ?></td>
                         <td>
                             <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
@@ -129,8 +133,12 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                 <div class="modal-body">
                     <input name="ten_mon" class="form-control mb-2" placeholder="Tên món" required>
                     <input name="danh_muc" class="form-control mb-2" placeholder="Danh mục">
+                    <input name="gia_von_500ml" type="number" step="1000" class="form-control mb-2"
+                        placeholder="Giá vốn 500ml" required>
                     <input name="gia_ban_500ml" type="number" step="1000" class="form-control mb-2"
                         placeholder="Giá bán 500ml" required>
+                    <input name="gia_von_700ml" type="number" step="1000" class="form-control mb-2"
+                        placeholder="Giá vốn 700ml" required>
                     <input name="gia_ban_700ml" type="number" step="1000" class="form-control mb-2"
                         placeholder="Giá bán 700ml" required>
                     <textarea name="ghi_chu" class="form-control" placeholder="Ghi chú"></textarea>
@@ -163,8 +171,12 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                         placeholder="Tên món" required>
                     <input name="danh_muc" class="form-control mb-2" value="<?= $edit['danh_muc'] ?>"
                         placeholder="Danh mục">
+                    <input name="gia_von_500ml" type="number" step="1000" class="form-control mb-2"
+                        value="<?= $edit['gia_von_500ml'] ?>" placeholder="Giá vốn 500ml">
                     <input name="gia_ban_500ml" type="number" step="1000" class="form-control mb-2"
                         value="<?= $edit['gia_ban_500ml'] ?>" placeholder="Giá bán 500ml">
+                    <input name="gia_von_700ml" type="number" step="1000" class="form-control mb-2"
+                        value="<?= $edit['gia_von_700ml'] ?>" placeholder="Giá vốn 700ml">
                     <input name="gia_ban_700ml" type="number" step="1000" class="form-control mb-2"
                         value="<?= $edit['gia_ban_700ml'] ?>" placeholder="Giá bán 700ml">
                     <textarea name="ghi_chu" class="form-control"
