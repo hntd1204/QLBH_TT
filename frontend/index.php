@@ -5,6 +5,36 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 include '../backend/database.php';
+
+// Lấy tổng doanh thu cho người dùng
+$total_revenue_query = "SELECT SUM(total_price) AS total_revenue FROM donhang WHERE user_id = ?";
+$stmt_revenue = $conn->prepare($total_revenue_query);
+$stmt_revenue->bind_param("i", $_SESSION['user_id']);
+$stmt_revenue->execute();
+$revenue_result = $stmt_revenue->get_result();
+$revenue_data = $revenue_result->fetch_assoc();
+$total_revenue = $revenue_data['total_revenue'] ?? 0; // Nếu không có doanh thu thì mặc định là 0
+
+// Truy vấn doanh thu tuần này
+$this_week_query = "SELECT SUM(total_price) AS weekly_revenue 
+                    FROM donhang 
+                    WHERE user_id = ? 
+                    AND WEEK(ngay_tao) = WEEK(CURDATE())";
+$stmt_weekly = $conn->prepare($this_week_query);
+$stmt_weekly->bind_param("i", $_SESSION['user_id']);
+$stmt_weekly->execute();
+$weekly_result = $stmt_weekly->get_result();
+$weekly_data = $weekly_result->fetch_assoc();
+$weekly_revenue = $weekly_data['weekly_revenue'] ?? 0;
+
+// Thực hiện các truy vấn khác trong dashboard như tổng số hàng hóa, tồn kho...
+$res = $conn->query("SELECT 
+    (SELECT COUNT(*) FROM hanghoa) AS total_hanghoa,
+    (SELECT SUM(so_luong) FROM hanghoa) AS tong_tonkho,
+    (SELECT SUM(so_luong * gia_nhap) FROM hanghoa) AS tong_giatri,
+    (SELECT COUNT(*) FROM phieu_nhap_xuat WHERE loai = 'nhap' AND ngay_thao_tac >= CURDATE() - INTERVAL 7 DAY) AS nhap_7ngay
+");
+$row = $res->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
@@ -30,7 +60,6 @@ include '../backend/database.php';
                 <div class="container-fluid">
                     <span class="navbar-brand mb-0 h5">Trang tổng quan</span>
 
-                    <!-- Thêm vào đây -->
                     <div class="ms-auto d-flex align-items-center">
                         <span class="me-3 text-muted">👤 Đang đăng nhập:
                             <strong><?= htmlspecialchars($_SESSION['username']) ?></strong></span>
@@ -39,7 +68,6 @@ include '../backend/database.php';
                 </div>
             </nav>
 
-
             <!-- Nội dung chính -->
             <div class="container py-4">
                 <h2 class="mb-4">Chào mừng đến với hệ thống quản lý <strong>TYTEA</strong></h2>
@@ -47,16 +75,6 @@ include '../backend/database.php';
 
                 <!-- DASHBOARD -->
                 <div class="row">
-                    <?php
-                    $res = $conn->query("SELECT 
-                        (SELECT COUNT(*) FROM hanghoa) AS total_hanghoa,
-                        (SELECT SUM(so_luong) FROM hanghoa) AS tong_tonkho,
-                        (SELECT SUM(so_luong * gia_nhap) FROM hanghoa) AS tong_giatri,
-                        (SELECT COUNT(*) FROM phieu_nhap_xuat WHERE loai = 'nhap' AND ngay_thao_tac >= CURDATE() - INTERVAL 7 DAY) AS nhap_7ngay
-                    ");
-                    $row = $res->fetch_assoc();
-                    ?>
-
                     <div class="col-md-3">
                         <div class="card text-white bg-primary mb-3">
                             <div class="card-body">
@@ -94,6 +112,30 @@ include '../backend/database.php';
                     </div>
                 </div>
                 <!-- END DASHBOARD -->
+
+                <div class="row mt-5">
+                    <!-- Doanh thu Tổng -->
+                    <div class="col-md-6">
+                        <div class="card text-white bg-info mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Tổng Doanh Thu</h5>
+                                <p class="card-text fs-4">
+                                    <?= number_format($total_revenue, 0, ',', '.') ?> VND
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Doanh thu tuần này -->
+                    <div class="col-md-6">
+                        <div class="card text-white bg-secondary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Doanh Thu Tuần này</h5>
+                                <p class="card-text fs-4"><?= number_format($weekly_revenue, 0, ',', '.') ?> VND</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
             </div>
         </div>

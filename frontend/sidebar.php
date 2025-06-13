@@ -28,6 +28,16 @@ $current = basename($_SERVER['PHP_SELF']);
             </a>
         </li>
         <li>
+            <a href="donhang.php" class="nav-link <?= $current == 'donhang.php' ? 'active' : 'text-dark' ?>">
+                Đơn hàng và Giỏ hàng
+            </a>
+        </li>
+        <li>
+            <a href="doanhthu.php" class="nav-link <?= $current == 'doanhthu.php' ? 'active' : 'text-dark' ?>">
+                Doanh thu
+            </a>
+        </li>
+        <li>
             <a href="congthuc_nuoc.php"
                 class="nav-link <?= $current == 'congthuc_nuoc.php' ? 'active' : 'text-dark' ?>">
                 Công thức nước
@@ -36,11 +46,6 @@ $current = basename($_SERVER['PHP_SELF']);
         <li>
             <a href="congthuc_nau.php" class="nav-link <?= $current == 'congthuc_nau.php' ? 'active' : 'text-dark' ?>">
                 Công thức nấu
-            </a>
-        </li>
-        <li>
-            <a href="chiphi.php" class="nav-link <?= $current == 'chiphi.php' ? 'active' : 'text-dark' ?>">
-                Chi phí
             </a>
         </li>
 

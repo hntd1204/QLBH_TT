@@ -1,5 +1,7 @@
-<?php include '../backend/database.php';
+<?php
+include '../backend/database.php';
 session_start();
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
@@ -77,7 +79,8 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                     <tr>
                         <th>Tên món</th>
                         <th>Danh mục</th>
-                        <th>Giá bán</th>
+                        <th>Giá 500ml</th>
+                        <th>Giá 700ml</th>
                         <th>Ghi chú</th>
                         <th>Hành động</th>
                     </tr>
@@ -87,7 +90,8 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                     <tr>
                         <td><?= htmlspecialchars($row['ten_mon']) ?></td>
                         <td><?= htmlspecialchars($row['danh_muc']) ?></td>
-                        <td><?= number_format($row['gia_ban']) ?></td>
+                        <td><?= number_format($row['gia_ban_500ml']) ?> VND</td>
+                        <td><?= number_format($row['gia_ban_700ml']) ?> VND</td>
                         <td><?= htmlspecialchars($row['ghi_chu']) ?></td>
                         <td>
                             <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
@@ -124,7 +128,10 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                 <div class="modal-body">
                     <input name="ten_mon" class="form-control mb-2" placeholder="Tên món" required>
                     <input name="danh_muc" class="form-control mb-2" placeholder="Danh mục">
-                    <input name="gia_ban" type="number" step="1000" class="form-control mb-2" placeholder="Giá bán">
+                    <input name="gia_ban_500ml" type="number" step="1000" class="form-control mb-2"
+                        placeholder="Giá bán 500ml" required>
+                    <input name="gia_ban_700ml" type="number" step="1000" class="form-control mb-2"
+                        placeholder="Giá bán 700ml" required>
                     <textarea name="ghi_chu" class="form-control" placeholder="Ghi chú"></textarea>
                 </div>
                 <div class="modal-footer">
@@ -149,14 +156,18 @@ while ($r = $danhmuc_res->fetch_assoc()) $danhmucs[] = $r['danh_muc'];
                 <input type="hidden" name="id" value="<?= $edit['id'] ?>">
                 <div class="modal-header">
                     <h5 class="modal-title">Sửa món</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input name="ten_mon" class="form-control mb-2" value="<?= $edit['ten_mon'] ?>">
-                    <input name="danh_muc" class="form-control mb-2" value="<?= $edit['danh_muc'] ?>">
-                    <input name="gia_ban" type="number" step="1000" class="form-control mb-2"
-                        value="<?= $edit['gia_ban'] ?>">
-                    <textarea name="ghi_chu" class="form-control"><?= $edit['ghi_chu'] ?></textarea>
+                    <input name="ten_mon" class="form-control mb-2" value="<?= $edit['ten_mon'] ?>"
+                        placeholder="Tên món" required>
+                    <input name="danh_muc" class="form-control mb-2" value="<?= $edit['danh_muc'] ?>"
+                        placeholder="Danh mục">
+                    <input name="gia_ban_500ml" type="number" step="1000" class="form-control mb-2"
+                        value="<?= $edit['gia_ban_500ml'] ?>" placeholder="Giá bán 500ml">
+                    <input name="gia_ban_700ml" type="number" step="1000" class="form-control mb-2"
+                        value="<?= $edit['gia_ban_700ml'] ?>" placeholder="Giá bán 700ml">
+                    <textarea name="ghi_chu" class="form-control"
+                        placeholder="Ghi chú"><?= $edit['ghi_chu'] ?></textarea>
                 </div>
                 <div class="modal-footer">
                     <a href="thucdon.php" class="btn btn-secondary">Huỷ</a>
