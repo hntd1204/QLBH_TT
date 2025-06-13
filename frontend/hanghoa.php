@@ -22,7 +22,7 @@ if (isset($_POST['add'])) {
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
     $stmt->bind_param("ssdssdss", $ten, $loai, $so_luong, $don_vi, $kieu, $gia_nhap, $nha_cung_cap, $ghi_chu);
     $stmt->execute();
-    header("Location: hanghoa.php");
+    header("Location: hanghoa.php?msg=add_success");
     exit;
 }
 
@@ -43,38 +43,17 @@ if (isset($_POST['update'])) {
         WHERE id=?");
     $stmt->bind_param("ssdssdssi", $ten, $loai, $so_luong, $don_vi, $kieu, $gia_nhap, $nha_cung_cap, $ghi_chu, $id);
     $stmt->execute();
-    header("Location: hanghoa.php");
+    header("Location: hanghoa.php?msg=update_success");
     exit;
 }
 
 // Phần xử lý xoá hàng hoá
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
-    $conn->query("DELETE FROM hanghoa WHERE id=$id");
-    header("Location: hanghoa.php");
-    exit;
-}
-
-// Phần xử lý phiếu nhập/xuất
-if (isset($_POST['save_nhap_xuat'])) {
-    $hanghoa_id = $_POST['hanghoa_id'];
-    $loai = $_POST['loai']; // 'nhap' hoặc 'xuat'
-    $so_luong = (float) $_POST['so_luong'];
-    $ghi_chu = $conn->real_escape_string($_POST['ghi_chu'] ?? '');
-
-    // Lưu vào bảng phiếu nhập/xuất
-    $conn->query("
-        INSERT INTO phieu_nhap_xuat (hanghoa_id, loai, so_luong, ghi_chu)
-        VALUES ($hanghoa_id, '$loai', $so_luong, '$ghi_chu')
-    ");
-
-    // Cập nhật tồn kho
-    $sign = $loai === 'nhap' ? '+' : '-';
-    $conn->query("
-        UPDATE hanghoa SET so_luong = so_luong $sign $so_luong WHERE id = $hanghoa_id
-    ");
-
-    header("Location: hanghoa.php?msg=done");
+    $stmt = $conn->prepare("DELETE FROM hanghoa WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    header("Location: hanghoa.php?msg=delete_success");
     exit;
 }
 
@@ -272,6 +251,43 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
         </div>
     </div>
 
+    <!-- Modal Phiếu nhập/xuất -->
+    <div class="modal fade" id="addPhieuModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="../backend/xuly_nhap_xuat.php" method="POST" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tạo Phiếu nhập/xuất</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <select name="hanghoa_id" class="form-select mb-2" required>
+                        <?php
+                        $res = $conn->query("SELECT id, ten FROM hanghoa");
+                        while ($hh = $res->fetch_assoc()):
+                        ?>
+                        <option value="<?= $hh['id'] ?>"><?= htmlspecialchars($hh['ten']) ?></option>
+                        <?php endwhile; ?>
+                    </select>
+
+                    <select name="loai" class="form-select mb-2" required>
+                        <option value="nhap">Nhập</option>
+                        <option value="xuat">Xuất</option>
+                    </select>
+
+                    <input type="number" name="so_luong" class="form-control mb-2" min="0.01" step="0.01" required>
+
+                    <input type="text" name="ghi_chu" class="form-control mb-2" placeholder="Ghi chú">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" name="save_nhap_xuat" class="btn btn-primary">Lưu Phiếu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
     <!-- Modal Sửa -->
     <?php if (isset($_GET['edit'])):
         $id = (int) $_GET['edit'];
@@ -315,8 +331,6 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
         </div>
     </div>
     <?php endif; ?>
-
-
     <!-- Modal Thêm -->
     <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -345,56 +359,6 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
             </form>
         </div>
     </div>
-
-    <script>
-    function editProduct(id, ten, loai, so_luong, don_vi, kieu, gia_nhap, nha_cung_cap, ghi_chu) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-ten').value = ten;
-        document.getElementById('edit-loai').value = loai;
-        document.getElementById('edit-so_luong').value = so_luong;
-        document.getElementById('edit-don_vi').value = don_vi;
-        document.getElementById('edit-kieu').value = kieu;
-        document.getElementById('edit-gia_nhap').value = gia_nhap;
-        document.getElementById('edit-nha_cung_cap').value = nha_cung_cap;
-        document.getElementById('edit-ghi_chu').value = ghi_chu;
-
-        var myModal = new bootstrap.Modal(document.getElementById('editModal'), {});
-        myModal.show();
-    }
-    </script>
-
-    <!-- Modal Phiếu nhập/xuất -->
-    <div class="modal fade" id="addPhieuModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <form action="hanghoa.php" method="POST" class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Tạo Phiếu nhập/xuất</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <select name="hanghoa_id" class="form-select mb-2" required>
-                        <?php
-                        $res = $conn->query("SELECT id, ten FROM hanghoa");
-                        while ($hh = $res->fetch_assoc()):
-                        ?>
-                        <option value="<?= $hh['id'] ?>"><?= $hh['ten'] ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                    <select name="loai" class="form-select mb-2" required>
-                        <option value="nhap">Nhập</option>
-                        <option value="xuat">Xuất</option>
-                    </select>
-                    <input type="number" name="so_luong" class="form-control mb-2" min="0.01" step="0.01" required>
-                    <input type="text" name="ghi_chu" class="form-control mb-2" placeholder="Ghi chú">
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" name="save_nhap_xuat" class="btn btn-primary">Lưu Phiếu</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
