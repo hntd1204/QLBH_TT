@@ -114,6 +114,15 @@ $gia_nhap_query = $conn->query("
     WHERE px.loai = 'nhap'
 ");
 $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
+
+//lịch sử nhập xuất
+$history_query = "
+    SELECT p.id AS phieu_id, h.ten AS hanghoa_ten, p.loai, p.so_luong, p.ngay_thao_tac, p.ghi_chu
+    FROM phieu_nhap_xuat p
+    JOIN hanghoa h ON p.hanghoa_id = h.id
+    ORDER BY p.ngay_thao_tac DESC
+";
+$history_result = $conn->query($history_query);
 ?>
 
 <!DOCTYPE html>
@@ -149,15 +158,6 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <select name="filter_kieu" class="form-select">
-                        <option value="">-- Lọc theo kiểu --</option>
-                        <option value="Nguyên liệu"
-                            <?= ($_GET['filter_kieu'] ?? '') == 'Nguyên liệu' ? 'selected' : '' ?>>Nguyên liệu</option>
-                        <option value="Vật liệu" <?= ($_GET['filter_kieu'] ?? '') == 'Vật liệu' ? 'selected' : '' ?>>Vật
-                            liệu</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
                     <select name="filter_ncc" class="form-select">
                         <option value="">-- Lọc theo Nhà cung cấp --</option>
                         <?php foreach ($nccOptions as $ncc): ?>
@@ -187,7 +187,6 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                         <th>Loại</th>
                         <th>Số lượng</th>
                         <th>Đơn vị</th>
-                        <th>Kiểu</th>
                         <th>Giá nhập</th>
                         <th>Nhà cung cấp</th>
                         <th>Giá trị tồn kho</th>
@@ -208,8 +207,7 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                             <?= $row['so_luong'] ?>
                             <?= $row['so_luong'] < 10 ? '<span class="badge bg-danger ms-2">Thấp</span>' : '' ?>
                         </td>
-                        <td><?= $row['don_vi'] ?></td>
-                        <td><?= $row['kieu'] ?></td>
+                        <td><?= $row['don_vi'] ?></td>c
                         <td><?= number_format($row['gia_nhap']) ?></td>
                         <td><?= htmlspecialchars($row['nha_cung_cap']) ?></td>
                         <td><?= number_format($giatri) ?></td>
@@ -248,6 +246,30 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                     <?php endfor; ?>
                 </ul>
             </nav>
+
+            <!-- Bảng Lịch sử Nhập/Xuất -->
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Hàng hóa</th>
+                        <th>Loại</th>
+                        <th>Số lượng</th>
+                        <th>Ngày thao tác</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($history_row = $history_result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($history_row['hanghoa_ten']) ?></td>
+                        <td><?= ($history_row['loai'] == 'nhap') ? 'Nhập' : 'Xuất' ?></td>
+                        <td><?= $history_row['so_luong'] ?></td>
+                        <td><?= $history_row['ngay_thao_tac'] ?></td>
+                        <td><?= htmlspecialchars($history_row['ghi_chu']) ?></td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -310,12 +332,6 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                     <input name="so_luong" type="number" step="0.01" class="form-control mb-2"
                         value="<?= $edit['so_luong'] ?>" placeholder="Số lượng">
                     <input name="don_vi" class="form-control mb-2" value="<?= $edit['don_vi'] ?>" placeholder="Đơn vị">
-                    <select name="kieu" class="form-select mb-2">
-                        <option value="Nguyên liệu" <?= ($edit['kieu'] == 'Nguyên liệu') ? 'selected' : '' ?>>Nguyên
-                            liệu</option>
-                        <option value="Vật liệu" <?= ($edit['kieu'] == 'Vật liệu') ? 'selected' : '' ?>>Vật liệu
-                        </option>
-                    </select>
                     <input name="gia_nhap" type="number" step="1000" class="form-control mb-2"
                         value="<?= $edit['gia_nhap'] ?>" placeholder="Giá nhập">
                     <input name="nha_cung_cap" class="form-control mb-2" value="<?= $edit['nha_cung_cap'] ?>"
@@ -344,10 +360,6 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                     <input name="loai" class="form-control mb-2" placeholder="Loại">
                     <input type="number" step="0.01" name="so_luong" class="form-control mb-2" placeholder="Số lượng">
                     <input name="don_vi" class="form-control mb-2" placeholder="Đơn vị">
-                    <select name="kieu" class="form-select mb-2">
-                        <option value="Nguyên liệu">Nguyên liệu</option>
-                        <option value="Vật liệu">Vật liệu</option>
-                    </select>
                     <input type="number" name="gia_nhap" step="1000" class="form-control mb-2" placeholder="Giá nhập">
                     <input name="nha_cung_cap" class="form-control mb-2" placeholder="Nhà cung cấp">
                     <textarea name="ghi_chu" class="form-control" placeholder="Ghi chú"></textarea>
