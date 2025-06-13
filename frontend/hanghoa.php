@@ -7,6 +7,54 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Phần xử lý thêm mới hàng hoá
+if (isset($_POST['add'])) {
+    $ten = $_POST['ten'];
+    $loai = $_POST['loai'];
+    $so_luong = $_POST['so_luong'];
+    $don_vi = $_POST['don_vi'];
+    $kieu = $_POST['kieu'];
+    $gia_nhap = $_POST['gia_nhap'] ?? 0;
+    $nha_cung_cap = $_POST['nha_cung_cap'] ?? '';
+    $ghi_chu = $_POST['ghi_chu'];
+
+    $stmt = $conn->prepare("INSERT INTO hanghoa (ten, loai, so_luong, don_vi, kieu, gia_nhap, nha_cung_cap, ghi_chu, ngay_thao_tac)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    $stmt->bind_param("ssdssdss", $ten, $loai, $so_luong, $don_vi, $kieu, $gia_nhap, $nha_cung_cap, $ghi_chu);
+    $stmt->execute();
+    header("Location: hanghoa.php");
+    exit;
+}
+
+// Phần xử lý cập nhật hàng hoá
+if (isset($_POST['update'])) {
+    $id = $_POST['id'];
+    $ten = $_POST['ten'];
+    $loai = $_POST['loai'];
+    $so_luong = $_POST['so_luong'];
+    $don_vi = $_POST['don_vi'];
+    $kieu = $_POST['kieu'];
+    $gia_nhap = $_POST['gia_nhap'] ?? 0;
+    $nha_cung_cap = $_POST['nha_cung_cap'] ?? '';
+    $ghi_chu = $_POST['ghi_chu'];
+
+    $stmt = $conn->prepare("UPDATE hanghoa 
+        SET ten=?, loai=?, so_luong=?, don_vi=?, kieu=?, gia_nhap=?, nha_cung_cap=?, ghi_chu=?, ngay_thao_tac=NOW()
+        WHERE id=?");
+    $stmt->bind_param("ssdssdssi", $ten, $loai, $so_luong, $don_vi, $kieu, $gia_nhap, $nha_cung_cap, $ghi_chu, $id);
+    $stmt->execute();
+    header("Location: hanghoa.php");
+    exit;
+}
+
+// Phần xử lý xoá hàng hoá
+if (isset($_GET['delete'])) {
+    $id = $_GET['delete'];
+    $conn->query("DELETE FROM hanghoa WHERE id=$id");
+    header("Location: hanghoa.php");
+    exit;
+}
+
 // Phần xử lý phiếu nhập/xuất
 if (isset($_POST['save_nhap_xuat'])) {
     $hanghoa_id = $_POST['hanghoa_id'];
@@ -187,9 +235,9 @@ $tong_gia_tri_nhap = $gia_nhap_query->fetch_assoc()['tong_nhap'] ?? 0;
                         <td><?= number_format($giatri) ?></td>
                         <td><?= $row['ngay_thao_tac'] ?></td>
                         <td>
-                            <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
-                            <a href="../backend/hanghoa_xuly.php?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger"
-                                onclick="return confirm('Xoá hàng hoá này?')">Xoá</a>
+                            <a href="hanghoa.php?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
+                            <a href="hanghoa.php?delete=<?= $row['id'] ?>" onclick="return confirm('Xoá hàng hoá này?')"
+                                class="btn btn-sm btn-danger">Xoá</a>
                         </td>
                     </tr>
                     <?php endwhile; ?>
